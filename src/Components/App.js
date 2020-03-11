@@ -14,22 +14,24 @@ class App extends Component {
     selectedShow: "",
     episodes: [],
     filterByRating: "",
+    page: 1,
   }
 
   componentDidMount = () => {
     Adapter.getShows().then(shows => this.setState({shows}))
+    
   }
 
   componentDidUpdate = () => {
     window.scrollTo(0, 0)
   }
 
-  handleSearch (e){
+  handleSearch = (e) => {
     this.setState({ searchTerm: e.target.value.toLowerCase() })
   }
 
   handleFilter = (e) => {
-    e.target.value === "No Filter" ? this.setState({ filterRating:"" }) : this.setState({ filterRating: e.target.value})
+    e.target.value === "No Filter" ? this.setState({ filterByRating:"" }) : this.setState({ filterByRating: e.target.value})
   }
 
   selectShow = (show) => {
@@ -50,16 +52,26 @@ class App extends Component {
     }
   }
 
+  handleScroll = () => {
+    return fetch(`http://api.tvmaze.com/shows?page=${this.state.page}`)
+    .then(res => res.json())
+    .then(shows => {
+      this.setState({
+        page: this.state.page + 1,
+        shows: this.state.shows.concat(shows),
+      })
+    })
+  }
+
   render (){
     return (
       <div>
         <Nav handleFilter={this.handleFilter} handleSearch={this.handleSearch} searchTerm={this.state.searchTerm}/>
         <Grid celled>
           <Grid.Column width={5}>
-            {!!this.state.selectedShow ? <SelectedShowContainer selectedShow={this.state.selectedShow} allEpisodes={this.state.episodes}/> : <div/>}
-          </Grid.Column>
+            {!!this.state.selectedShow ? <SelectedShowContainer selectedShow={this.state.selectedShow} episodes={this.state.episodes}/> : <div/>}          </Grid.Column>
           <Grid.Column width={11}>
-            <TVShowList shows={this.displayShows()} selectShow={this.selectShow} searchTerm={this.state.searchTerm}/>
+            <TVShowList handleScroll={this.handleScroll} shows={this.displayShows()} selectShow={this.selectShow} searchTerm={this.state.searchTerm}/>
           </Grid.Column>
         </Grid>
       </div>
